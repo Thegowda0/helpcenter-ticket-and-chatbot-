@@ -1,0 +1,20 @@
+HelpCenter v3.10.10 / v166 — same-tab page navigation state repair
+
+Root cause found in v165 source:
+- The widget declared hcWasChatOpen=false at every page load, then unconditionally reset it to false and wrote '0' to localStorage. This discarded the state that should carry the open panel to the next page.
+- The initial page-load handler restored a human ticket in the background but did not load the active AI transcript when the chat had been left open in AI mode.
+- The human-ticket status lookup was attempted even when no active human-ticket context was saved. It could make an ordinary AI chat wait through two sequential status checks before displaying history.
+
+Changes in v166:
+- Persist the panel open/closed state in sessionStorage (per tab), with localStorage fallback. Read it before any restore and do not erase it at boot.
+- On pagehide, snapshot panel state, current AI session ID, and active human-ticket context.
+- When the same tab opens another HelpCenter page, restore the support ticket first; if there is no active human ticket, load the selected AI transcript. If support restoration fails, show a retry control instead of silently switching to AI history.
+- Skip active-ticket status probes when no saved ticket ID/session context exists; load the human history list without blocking normal AI restore.
+- Keep the existing sound, volume, browser-notification, push, unread-message and agent realtime settings unchanged.
+
+Validation to run:
+- PHP lint for all PHP files in the complete archive.
+- JavaScript syntax check for the extracted inline customer widget.
+- ZIP integrity check.
+
+Not live-tested against the production WordPress site, browser navigation, Ably or database. This package is intended for staging verification first.
